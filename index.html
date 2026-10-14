@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TACTICAL RADAR - ThaiSonOO4</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
@@ -19,6 +19,7 @@
             font-family: 'Share Tech Mono', monospace;
             display: flex;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
             user-select: none;
         }
@@ -56,12 +57,11 @@
             background-color: #000000;
         }
 
-        /* BẮT BUỘC KHUNG VUÔNG 1:1 */
         .iframe-wrapper {
             position: relative;
             width: 95%; 
             max-width: 90vh; 
-            aspect-ratio: 1 / 1 !important; /* LỆNH ÉP VUÔNG TUYỆT ĐỐI */
+            aspect-ratio: 1 / 1 !important; 
             border: 1px solid #222222;
             background-color: #000000;
             padding: 3px;
@@ -83,7 +83,7 @@
             border: none; 
             display: block; 
             background-color: #000000;
-            object-fit: fill; /* Ép video lấp đầy mọi khoảng trống */
+            object-fit: fill; 
         }
 
         .chat-section {
@@ -104,19 +104,22 @@
         .chat-input-area input { flex: 1; padding: 10px; background-color: #080808; color: var(--text-main); border: 1px solid #222; }
         .chat-input-area button { background-color: #000; color: var(--neon-red); border: 1px solid var(--neon-red); cursor: pointer; }
 
-        /* TỐI ƯU CỰC MẠNH CHO ĐIỆN THOẠI */
-        @media (max-width: 768px) {
+        /* NÂNG CẤP MEDIA QUERY: Bắt tất cả các loại màn hình điện thoại/tablet (cả dọc lẫn ngang) */
+        @media (max-width: 1100px) {
             body { flex-direction: column; }
-            .sidebar, .chat-section { display: none; }
-            .map-section { padding: 0; }
+            .sidebar, .chat-section { display: none !important; } /* Ẩn triệt để thanh bên */
+            .map-section { padding: 0; width: 100%; height: 100%; }
             .iframe-wrapper {
-                width: 100vw;
-                height: 100vw; /* Chiều cao = Chiều rộng */
+                /* Dùng vmin để đảm bảo luôn là hình vuông to nhất có thể lọt vào màn hình */
+                width: 100vmin; 
+                height: 100vmin;
                 max-width: none;
-                aspect-ratio: 1 / 1 !important; /* ÉP VUÔNG TRÊN MOBILE */
-                border: none; /* Bỏ viền 2 bên để tràn kín viền màn hình điện thoại */
+                max-height: none;
+                aspect-ratio: 1 / 1 !important;
+                border: none;
                 padding: 0;
             }
+            .iframe-wrapper::before, .iframe-wrapper::after { display: none; }
         }
     </style>
 </head>
