@@ -56,12 +56,12 @@
             background-color: #000000;
         }
 
-        /* KHUNG VUÔNG 1:1 ĐỒNG BỘ OBS */
+        /* BẮT BUỘC KHUNG VUÔNG 1:1 */
         .iframe-wrapper {
             position: relative;
             width: 95%; 
-            max-width: 90vh; /* Giới hạn để không bị lố chiều cao khi xem trên PC */
-            aspect-ratio: 1 / 1; /* CHUẨN VUÔNG */
+            max-width: 90vh; 
+            aspect-ratio: 1 / 1 !important; /* LỆNH ÉP VUÔNG TUYỆT ĐỐI */
             border: 1px solid #222222;
             background-color: #000000;
             padding: 3px;
@@ -83,7 +83,7 @@
             border: none; 
             display: block; 
             background-color: #000000;
-            object-fit: cover;
+            object-fit: fill; /* Ép video lấp đầy mọi khoảng trống */
         }
 
         .chat-section {
@@ -104,15 +104,18 @@
         .chat-input-area input { flex: 1; padding: 10px; background-color: #080808; color: var(--text-main); border: 1px solid #222; }
         .chat-input-area button { background-color: #000; color: var(--neon-red); border: 1px solid var(--neon-red); cursor: pointer; }
 
-        /* TỐI ƯU CHO MÀN HÌNH ĐIỆN THOẠI */
+        /* TỐI ƯU CỰC MẠNH CHO ĐIỆN THOẠI */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .sidebar, .chat-section { display: none; }
-            .map-section { padding: 5px; }
+            .map-section { padding: 0; }
             .iframe-wrapper {
-                width: 98vw;
-                height: auto;
-                aspect-ratio: 1 / 1; /* VUÔNG TRÊN ĐIỆN THOẠI */
+                width: 100vw;
+                height: 100vw; /* Chiều cao = Chiều rộng */
+                max-width: none;
+                aspect-ratio: 1 / 1 !important; /* ÉP VUÔNG TRÊN MOBILE */
+                border: none; /* Bỏ viền 2 bên để tràn kín viền màn hình điện thoại */
+                padding: 0;
             }
         }
     </style>
@@ -127,7 +130,6 @@
 
     <div class="map-section">
         <div class="iframe-wrapper">
-            <!-- Đã gỡ bỏ tham số aspectratio chữ nhật -->
             <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1" allow="autoplay; fullscreen"></iframe>
         </div>
     </div>
@@ -135,7 +137,7 @@
     <div class="chat-section">
         <div class="chat-header">COMMS_CENTER</div>
         <div class="chat-box" id="chatBox">
-            <div class="chat-msg"><span class="user">Viewer_01:</span><span class="text">Bản đồ vuông nét căng! Chơi game mượt mà nhé sếp.</span></div>
+            <div class="chat-msg"><span class="user">Viewer_01:</span><span class="text">Bản đồ vuông nét căng!</span></div>
         </div>
         <div class="chat-input-area">
             <input type="text" id="chatInput" placeholder="Nhập tin nhắn...">
