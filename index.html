@@ -2,185 +2,133 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <!-- LỆNH ÉP FULLSCREEN VÀ XÓA STATUS BAR CỦA APPLE -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <title>TACTICAL RADAR</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Tọa độ chuẩn của minimap phóng to (phím N) ở góc dưới bên phải màn hình 2K */
-            --x: -28.5vw; 
-            --y: -14.5vh; 
-            --s: 2.85;   
             --neon-red: #ff3b30;
-            --neon-blue: #0a84ff;
+            --text-main: #f0f0f0;
         }
-        body {
-            margin: 0; background: #000; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-            height: 100vh; width: 100vw; font-family: 'Orbitron', sans-serif; user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* KHUNG CẮT RADAR HÌNH VUÔNG */
-        #mask {
-            position: relative;
-            width: 100vmin; height: 100vmin;
-            border: 1px solid #222;
-            box-sizing: border-box;
-            overflow: hidden;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        /* VÙNG CHỨA VIDEO GAME (CHUẨN 16:9) */
-        #video-container {
-            position: absolute;
-            height: 100vh; width: 177.77vh;
-            left: 50%; top: 50%;
-            transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(var(--s));
-            transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            pointer-events: none;
-        }
-
-        iframe { width: 100%; height: 100%; border: none; object-fit: fill; }
-
-        /* CHẾ ĐỘ BODY CAM (FULL TOÀN CẢNH) */
-        body.mode-bodycam #mask {
-            width: 100vw; height: 100vh; border: none; border-radius: 0;
-        }
-        body.mode-bodycam #video-container {
-            transform: translate(-50%, -50%) translate(0, 0) scale(1);
-            width: 100vw; height: 100vh;
-        }
-
-        /* BẢNG MENU */
-        #ui {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
-            z-index: 1000;
-        }
-        #ui.active { display: flex; }
-
-        .title { color: #fff; font-size: 20px; text-align: center; margin-bottom: 10px; letter-spacing: 1px; }
-
-        .row { display: flex; gap: 15px; }
-
-        .btn { 
-            background: #111; color: white; border: 2px solid #333; 
-            padding: 18px 25px; font-size: 15px; font-weight: bold; 
-            border-radius: 8px; cursor: pointer; text-transform: uppercase;
-            transition: all 0.15s;
-        }
-        .btn:active { transform: scale(0.95); }
-        .btn-active { border-color: var(--neon-red); color: var(--neon-red); }
-        .btn-blue { border-color: var(--neon-blue); color: var(--neon-blue); }
-
-        /* BỘ PHÍM CĂN NHANH */
-        .quick-pad { display: grid; grid-template-columns: repeat(3, 85px); gap: 10px; margin-top: 10px; }
-        .q-btn { 
-            height: 55px; background: #1a1a1a; color: #fff; border: 1.5px solid #444; 
-            border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .q-btn span { font-size: 14px; font-weight: 900; }
-        .q-btn:active { background: #333; }
         
-        .hint { position: absolute; bottom: 30px; color: #888; font-size: 13px; width: 100%; text-align: center; }
+        body { 
+            margin: 0; 
+            padding: 0;
+            background-color: #000000; 
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: #000000;
+            border-right: 1px solid #1a1a1a;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .live-status { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; }
+        .live-dot { width: 10px; height: 10px; background-color: var(--neon-red); border-radius: 50%; }
+        .live-text { color: var(--neon-red); font-weight: 700; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
+        .title { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #ffffff; margin: 0 0 35px 0; }
+        
+        .info-box {
+            background-color: #050505;
+            border: 1px solid #1a1a1a;
+            border-left: 3px solid var(--neon-red);
+            padding: 12px 15px;
+            margin-bottom: 15px;
+        }
+        .info-label { color: #555555; font-size: 0.8rem; margin-bottom: 3px; text-transform: uppercase; }
+
+        .map-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background-color: #000000;
+        }
+
+        .iframe-wrapper {
+            position: relative;
+            width: 95%; 
+            max-width: 90vh; 
+            aspect-ratio: 1 / 1 !important; 
+            border: 1px solid #222222;
+            background-color: #000000;
+            padding: 3px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            display: block; 
+            background-color: #000000;
+            object-fit: fill; 
+        }
+
+        .chat-section {
+            width: 320px;
+            background-color: #000000;
+            border-left: 1px solid #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .chat-header { padding: 15px 20px; font-family: 'Orbitron', sans-serif; font-weight: 700; border-bottom: 1px solid #1a1a1a; }
+        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .chat-msg .user { font-weight: 700; color: var(--neon-red); margin-right: 5px; }
+        .chat-msg .text { color: #888888; }
+        
+        .chat-input-area { padding: 15px; border-top: 1px solid #1a1a1a; display: flex; gap: 8px; }
+        .chat-input-area input { flex: 1; padding: 10px; background-color: #080808; color: var(--text-main); border: 1px solid #222; }
+        .chat-input-area button { background-color: #000; color: var(--neon-red); border: 1px solid var(--neon-red); cursor: pointer; }
+
+        @media (max-width: 1100px) {
+            body { flex-direction: column; background-color: #000000; }
+            .sidebar, .chat-section { display: none !important; }
+            .map-section { padding: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+            .iframe-wrapper {
+                width: 100vmin; 
+                height: 100vmin;
+                max-width: none;
+                max-height: none;
+                aspect-ratio: 1 / 1 !important;
+                border: none;
+                padding: 0;
+            }
+            .iframe-wrapper::before, .iframe-wrapper::after { display: none; }
+        }
     </style>
 </head>
-<body class="mode-minimap">
-    <div id="mask">
-        <div id="video-container">
-            <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1&buffer=0" allow="autoplay; fullscreen"></iframe>
-        </div>
+<body>
+    <div class="sidebar">
+        <div class="live-status"><div class="live-dot"></div><div class="live-text">LIVE FEED</div></div>
+        <h1 class="title">TACTICAL<br>RADAR</h1>
     </div>
 
-    <!-- KHUNG ĐIỀU KHIỂN CỰC NHANH -->
-    <div id="ui">
-        <div class="title">CHẾ ĐỘ XEM TỨC THỜI</div>
-        <div class="row">
-            <button class="btn btn-active" id="btn-mini" onclick="setMode('minimap')">Bản Đồ Phóng To (N)</button>
-            <button class="btn btn-blue" id="btn-body" onclick="setMode('bodycam')">Body Cam (Full)</button>
+    <div class="map-section">
+        <div class="iframe-wrapper">
+            <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1" allow="autoplay; fullscreen"></iframe>
         </div>
-
-        <div class="title" style="margin-top: 20px;">SỬA LỆCH NHANH (NẾU BỊ MẤT GÓC)</div>
-        <div class="quick-pad">
-            <button class="q-btn" onclick="quickShift('left')">←<span>TRÁI</span></button>
-            <button class="q-btn" onclick="quickShift('up')">↑<span>LÊN</span></button>
-            <button class="q-btn" onclick="quickShift('right')">→<span>PHẢI</span></button>
-            <button class="q-btn" onclick="quickZoom('out')">-<span>NHỎ</span></button>
-            <button class="q-btn" onclick="quickShift('down')">↓<span>XUỐNG</span></button>
-            <button class="q-btn" onclick="quickZoom('in')">+<span>TO</span></button>
-        </div>
-
-        <button class="btn" style="border-color: #555; margin-top: 20px; font-size: 13px;" onclick="closeUI()">ĐÓNG MENU</button>
-        <div class="hint">Chạm đúp 2 lần vào màn hình để mở/tắt bảng này</div>
     </div>
-
-    <script>
-        let root = document.documentElement;
-        // Điểm cắt mặc định tối ưu nhất cho Bản đồ lớn PUBG (phím N)
-        let x = -28.5, y = -14.5, s = 2.85;
-
-        // Tải vị trí lưu từ trước (nếu có) để người dùng không phải chỉnh lại lần thứ 2
-        if(localStorage.getItem('r_saved')) {
-            x = parseFloat(localStorage.getItem('r_x'));
-            y = parseFloat(localStorage.getItem('r_y'));
-            s = parseFloat(localStorage.getItem('r_s'));
-            updateCSS();
-        }
-
-        function updateCSS() {
-            root.style.setProperty('--x', x + 'vw');
-            root.style.setProperty('--y', y + 'vh');
-            root.style.setProperty('--s', s);
-            localStorage.setItem('r_saved', 'yes');
-            localStorage.setItem('r_x', x);
-            localStorage.setItem('r_y', y);
-            localStorage.setItem('r_s', s);
-        }
-
-        // Di chuyển mạnh bằng 1 chạm
-        function quickShift(dir) {
-            if (dir === 'left') x -= 1.5;
-            if (dir === 'right') x += 1.5;
-            if (dir === 'up') y -= 1.5;
-            if (dir === 'down') y += 1.5;
-            updateCSS();
-        }
-
-        // Thu phóng mạnh bằng 1 chạm
-        function quickZoom(type) {
-            if (type === 'in') s += 0.15;
-            if (type === 'out') { s -= 0.15; if (s < 1) s = 1; }
-            updateCSS();
-        }
-
-        function setMode(m) {
-            document.body.className = 'mode-' + m;
-            document.getElementById('btn-mini').classList.remove('btn-active');
-            document.getElementById('btn-body').classList.remove('btn-active');
-            if(m === 'minimap') document.getElementById('btn-mini').classList.add('btn-active');
-            if(m === 'bodycam') document.getElementById('btn-body').classList.add('btn-active');
-            closeUI();
-        }
-
-        function closeUI() {
-            document.getElementById('ui').classList.remove('active');
-        }
-
-        // Chạm đúp 2 lần để bật Menu
-        let lastClick = 0;
-        document.getElementById('mask').addEventListener('click', function(e) {
-            let curr = new Date().getTime();
-            if (curr - lastClick < 400) {
-                document.getElementById('ui').classList.toggle('active');
-            }
-            lastClick = curr;
-        });
-    </script>
 </body>
 </html>
