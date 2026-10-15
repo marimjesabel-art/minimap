@@ -2,133 +2,125 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <!-- LỆNH ÉP FULLSCREEN VÀ XÓA STATUS BAR CỦA APPLE -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <title>TACTICAL RADAR</title>
+    <title>TACTICAL SYSTEM</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --neon-red: #ff3b30;
-            --text-main: #f0f0f0;
+            --neon-blue: #0a84ff;
         }
         
         body { 
-            margin: 0; 
-            padding: 0;
-            background-color: #000000; 
-            color: var(--text-main);
-            font-family: 'Share Tech Mono', monospace;
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            user-select: none;
+            margin: 0; padding: 0; background-color: #000; 
+            font-family: 'Share Tech Mono', monospace; user-select: none;
+            touch-action: manipulation;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw; overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .sidebar {
-            width: 320px;
-            background-color: #000000;
-            border-right: 1px solid #1a1a1a;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-
-        .live-status { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; }
-        .live-dot { width: 10px; height: 10px; background-color: var(--neon-red); border-radius: 50%; }
-        .live-text { color: var(--neon-red); font-weight: 700; font-size: 1rem; font-family: 'Orbitron', sans-serif; }
-        .title { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #ffffff; margin: 0 0 35px 0; }
-        
-        .info-box {
-            background-color: #050505;
-            border: 1px solid #1a1a1a;
-            border-left: 3px solid var(--neon-red);
-            padding: 12px 15px;
-            margin-bottom: 15px;
-        }
-        .info-label { color: #555555; font-size: 0.8rem; margin-bottom: 3px; text-transform: uppercase; }
-
-        .map-section {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            background-color: #000000;
-        }
-
-        .iframe-wrapper {
+        #videoMask {
             position: relative;
-            width: 95%; 
-            max-width: 90vh; 
-            aspect-ratio: 1 / 1 !important; 
-            border: 1px solid #222222;
-            background-color: #000000;
-            padding: 3px;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 100vmin; 
+            height: 100vmin; 
+            overflow: hidden; 
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 4px;
         }
 
         iframe { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
-            display: block; 
-            background-color: #000000;
-            object-fit: fill; 
+            width: 100%; height: 100%; border: none; pointer-events: none; 
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        .chat-section {
-            width: 320px;
-            background-color: #000000;
-            border-left: 1px solid #1a1a1a;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+        /* ====== CHẾ ĐỘ 1: MINIMAP (MẶC ĐỊNH) ====== */
+        body.mode-minimap iframe {
+            object-fit: cover;
+            object-position: bottom right; 
+            /* Tỷ lệ phóng to đã được khóa chuẩn cho HUD PUBG 2K */
+            transform: scale(4.2); 
+            transform-origin: bottom right; 
         }
 
-        .chat-header { padding: 15px 20px; font-family: 'Orbitron', sans-serif; font-weight: 700; border-bottom: 1px solid #1a1a1a; }
-        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .chat-msg .user { font-weight: 700; color: var(--neon-red); margin-right: 5px; }
-        .chat-msg .text { color: #888888; }
-        
-        .chat-input-area { padding: 15px; border-top: 1px solid #1a1a1a; display: flex; gap: 8px; }
-        .chat-input-area input { flex: 1; padding: 10px; background-color: #080808; color: var(--text-main); border: 1px solid #222; }
-        .chat-input-area button { background-color: #000; color: var(--neon-red); border: 1px solid var(--neon-red); cursor: pointer; }
-
-        @media (max-width: 1100px) {
-            body { flex-direction: column; background-color: #000000; }
-            .sidebar, .chat-section { display: none !important; }
-            .map-section { padding: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-            .iframe-wrapper {
-                width: 100vmin; 
-                height: 100vmin;
-                max-width: none;
-                max-height: none;
-                aspect-ratio: 1 / 1 !important;
-                border: none;
-                padding: 0;
-            }
-            .iframe-wrapper::before, .iframe-wrapper::after { display: none; }
+        /* ====== CHẾ ĐỘ 2: BODY CAM ====== */
+        body.mode-bodycam #videoMask {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
         }
+
+        body.mode-bodycam iframe {
+            object-fit: contain;
+            object-position: center;
+            transform: scale(1); 
+        }
+
+        /* ====== MENU LỰA CHỌN ====== */
+        #uiOverlay {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; gap: 25px;
+            align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 999;
+        }
+
+        #uiOverlay.active { opacity: 1; pointer-events: auto; }
+
+        .title { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.8rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;}
+
+        .btn {
+            width: 280px; padding: 22px; font-size: 1.3rem; font-family: 'Orbitron', sans-serif; font-weight: 900;
+            background: #0a0a0a; color: #fff; border: 2px solid #333; border-radius: 12px;
+            text-transform: uppercase; cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+        }
+        .btn-red { border-color: var(--neon-red); color: var(--neon-red); box-shadow: 0 0 15px rgba(255, 59, 48, 0.2); }
+        .btn-blue { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 15px rgba(10, 132, 255, 0.2); }
+        .btn:active { background: #222; transform: scale(0.95); }
     </style>
 </head>
-<body>
-    <div class="sidebar">
-        <div class="live-status"><div class="live-dot"></div><div class="live-text">LIVE FEED</div></div>
-        <h1 class="title">TACTICAL<br>RADAR</h1>
+
+<body class="mode-minimap">
+
+    <div id="videoMask">
+        <!-- Đã ép luồng trực tiếp không độ trễ buffer=0 -->
+        <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1&buffer=0" allow="autoplay; fullscreen"></iframe>
     </div>
 
-    <div class="map-section">
-        <div class="iframe-wrapper">
-            <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1" allow="autoplay; fullscreen"></iframe>
-        </div>
+    <div id="uiOverlay">
+        <div class="title">TACTICAL SYSTEM</div>
+        <button class="btn btn-red" id="btnMinimap">MINIMAP (RADAR)</button>
+        <button class="btn btn-blue" id="btnBodycam">BODY CAM (FULL)</button>
     </div>
+
+    <script>
+        let lastClick = 0;
+        document.body.addEventListener('click', function(e) {
+            if(e.target.tagName === 'BUTTON') return; 
+
+            let currentTime = new Date().getTime();
+            let timeDiff = currentTime - lastClick;
+            
+            // Chạm đúp (Double Tap)
+            if (timeDiff > 0 && timeDiff < 400) {
+                document.getElementById('uiOverlay').classList.add('active');
+            }
+            lastClick = currentTime;
+        });
+
+        document.getElementById('btnMinimap').addEventListener('click', function() {
+            document.body.className = 'mode-minimap';
+            document.getElementById('uiOverlay').classList.remove('active');
+        });
+
+        document.getElementById('btnBodycam').addEventListener('click', function() {
+            document.body.className = 'mode-bodycam';
+            document.getElementById('uiOverlay').classList.remove('active');
+        });
+    </script>
 </body>
 </html>
