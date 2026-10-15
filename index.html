@@ -3,13 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TACTICAL RADAR</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --x: -20vw; /* Tọa độ X mặc định */
-            --y: -10vh; /* Tọa độ Y mặc định */
-            --s: 2.2;   /* Độ zoom mặc định */
+            /* Tọa độ chuẩn của minimap phóng to (phím N) ở góc dưới bên phải màn hình 2K */
+            --x: -28.5vw; 
+            --y: -14.5vh; 
+            --s: 2.85;   
+            --neon-red: #ff3b30;
+            --neon-blue: #0a84ff;
         }
         body {
             margin: 0; background: #000; overflow: hidden;
@@ -18,11 +23,11 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* KHUNG CẮT RADAR (CÓ VIỀN ĐỎ ĐỂ DỄ CANH) */
+        /* KHUNG CẮT RADAR HÌNH VUÔNG */
         #mask {
             position: relative;
             width: 100vmin; height: 100vmin;
-            border: 2px solid #ff3b30;
+            border: 1px solid #222;
             box-sizing: border-box;
             overflow: hidden;
             border-radius: 8px;
@@ -34,9 +39,8 @@
             position: absolute;
             height: 100vh; width: 177.77vh;
             left: 50%; top: 50%;
-            /* Lệnh thả trôi video theo điều khiển của người dùng */
             transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(var(--s));
-            transition: transform 0.1s linear;
+            transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             pointer-events: none;
         }
 
@@ -51,28 +55,40 @@
             width: 100vw; height: 100vh;
         }
 
-        /* BẢNG MENU VÀ JOYSTICK */
+        /* BẢNG MENU */
         #ui {
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            display: none; align-items: center; justify-content: center; gap: 50px;
+            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
             z-index: 1000;
         }
         #ui.active { display: flex; }
 
-        .panel { display: flex; flex-direction: column; gap: 15px; }
-        .title { color: #ff3b30; font-size: 20px; text-align: center; margin-bottom: 5px; letter-spacing: 1px; }
+        .title { color: #fff; font-size: 20px; text-align: center; margin-bottom: 10px; letter-spacing: 1px; }
 
-        .btn { background: #111; color: white; border: 2px solid #333; padding: 18px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
-        .btn:active { background: #333; transform: scale(0.95); }
-        .btn-active { border-color: #0a84ff; color: #0a84ff; }
+        .row { display: flex; gap: 15px; }
 
-        .joystick { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; justify-content: center; }
-        .j-btn { height: 70px; background: #1a1a1a; color: white; font-size: 24px; font-weight: bold; border: 2px solid #444; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;}
-        .j-btn:active { background: #555; }
-        .j-red { border-color: #ff3b30; color: #ff3b30; }
+        .btn { 
+            background: #111; color: white; border: 2px solid #333; 
+            padding: 18px 25px; font-size: 15px; font-weight: bold; 
+            border-radius: 8px; cursor: pointer; text-transform: uppercase;
+            transition: all 0.15s;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-active { border-color: var(--neon-red); color: var(--neon-red); }
+        .btn-blue { border-color: var(--neon-blue); color: var(--neon-blue); }
+
+        /* BỘ PHÍM CĂN NHANH */
+        .quick-pad { display: grid; grid-template-columns: repeat(3, 85px); gap: 10px; margin-top: 10px; }
+        .q-btn { 
+            height: 55px; background: #1a1a1a; color: #fff; border: 1.5px solid #444; 
+            border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .q-btn span { font-size: 14px; font-weight: 900; }
+        .q-btn:active { background: #333; }
         
-        .hint { position: absolute; bottom: 30px; color: #888; font-size: 14px; width: 100%; text-align: center; }
+        .hint { position: absolute; bottom: 30px; color: #888; font-size: 13px; width: 100%; text-align: center; }
     </style>
 </head>
 <body class="mode-minimap">
@@ -82,34 +98,34 @@
         </div>
     </div>
 
-    <!-- KHUNG ĐIỀU KHIỂN CĂN CHỈNH TỌA ĐỘ -->
+    <!-- KHUNG ĐIỀU KHIỂN CỰC NHANH -->
     <div id="ui">
-        <div class="panel">
-            <div class="title">CHẾ ĐỘ XEM</div>
-            <button class="btn btn-active" id="btn-mini" onclick="setMode('minimap')">MINIMAP (RADAR)</button>
-            <button class="btn" id="btn-body" onclick="setMode('bodycam')">BODY CAM (FULL)</button>
-            <button class="btn" style="border-color: #ff3b30; color: #ff3b30; margin-top: 20px;" onclick="closeUI()">LƯU & ĐÓNG MENU</button>
+        <div class="title">CHẾ ĐỘ XEM TỨC THỜI</div>
+        <div class="row">
+            <button class="btn btn-active" id="btn-mini" onclick="setMode('minimap')">Bản Đồ Phóng To (N)</button>
+            <button class="btn btn-blue" id="btn-body" onclick="setMode('bodycam')">Body Cam (Full)</button>
         </div>
-        
-        <div class="panel">
-            <div class="title">CĂN CHỈNH BẢN ĐỒ (PHÍM N)</div>
-            <div class="joystick">
-                <button class="j-btn j-red" onclick="adj('s', 0.2)">+</button>
-                <button class="j-btn" onclick="adj('y', 4)">↑</button>
-                <button class="j-btn j-red" onclick="adj('s', -0.2)">-</button>
-                <button class="j-btn" onclick="adj('x', 4)">←</button>
-                <button class="j-btn" onclick="adj('y', -4)">↓</button>
-                <button class="j-btn" onclick="adj('x', -4)">→</button>
-            </div>
+
+        <div class="title" style="margin-top: 20px;">SỬA LỆCH NHANH (NẾU BỊ MẤT GÓC)</div>
+        <div class="quick-pad">
+            <button class="q-btn" onclick="quickShift('left')">←<span>TRÁI</span></button>
+            <button class="q-btn" onclick="quickShift('up')">↑<span>LÊN</span></button>
+            <button class="q-btn" onclick="quickShift('right')">→<span>PHẢI</span></button>
+            <button class="q-btn" onclick="quickZoom('out')">-<span>NHỎ</span></button>
+            <button class="q-btn" onclick="quickShift('down')">↓<span>XUỐNG</span></button>
+            <button class="q-btn" onclick="quickZoom('in')">+<span>TO</span></button>
         </div>
-        <div class="hint">Mũi tên chỉ hướng nào, camera trượt theo hướng đó</div>
+
+        <button class="btn" style="border-color: #555; margin-top: 20px; font-size: 13px;" onclick="closeUI()">ĐÓNG MENU</button>
+        <div class="hint">Chạm đúp 2 lần vào màn hình để mở/tắt bảng này</div>
     </div>
 
     <script>
         let root = document.documentElement;
-        let x = 0, y = 0, s = 2.2; // Tọa độ ban đầu
+        // Điểm cắt mặc định tối ưu nhất cho Bản đồ lớn PUBG (phím N)
+        let x = -28.5, y = -14.5, s = 2.85;
 
-        // Tải vị trí đã lưu trong bộ nhớ điện thoại
+        // Tải vị trí lưu từ trước (nếu có) để người dùng không phải chỉnh lại lần thứ 2
         if(localStorage.getItem('r_saved')) {
             x = parseFloat(localStorage.getItem('r_x'));
             y = parseFloat(localStorage.getItem('r_y'));
@@ -117,7 +133,6 @@
             updateCSS();
         }
 
-        // Cập nhật vị trí tức thời
         function updateCSS() {
             root.style.setProperty('--x', x + 'vw');
             root.style.setProperty('--y', y + 'vh');
@@ -128,11 +143,19 @@
             localStorage.setItem('r_s', s);
         }
 
-        // Nhận diện nút điều hướng
-        function adj(prop, val) {
-            if(prop === 'x') x += val;
-            if(prop === 'y') y += val;
-            if(prop === 's') { s += val; if(s < 1) s = 1; }
+        // Di chuyển mạnh bằng 1 chạm
+        function quickShift(dir) {
+            if (dir === 'left') x -= 1.5;
+            if (dir === 'right') x += 1.5;
+            if (dir === 'up') y -= 1.5;
+            if (dir === 'down') y += 1.5;
+            updateCSS();
+        }
+
+        // Thu phóng mạnh bằng 1 chạm
+        function quickZoom(type) {
+            if (type === 'in') s += 0.15;
+            if (type === 'out') { s -= 0.15; if (s < 1) s = 1; }
             updateCSS();
         }
 
@@ -142,6 +165,7 @@
             document.getElementById('btn-body').classList.remove('btn-active');
             if(m === 'minimap') document.getElementById('btn-mini').classList.add('btn-active');
             if(m === 'bodycam') document.getElementById('btn-body').classList.add('btn-active');
+            closeUI();
         }
 
         function closeUI() {
@@ -153,7 +177,7 @@
         document.getElementById('mask').addEventListener('click', function(e) {
             let curr = new Date().getTime();
             if (curr - lastClick < 400) {
-                document.getElementById('ui').classList.add('active');
+                document.getElementById('ui').classList.toggle('active');
             }
             lastClick = curr;
         });
