@@ -3,123 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>TACTICAL SYSTEM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    
+    <title>TACTICAL RADAR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon-red: #ff3b30;
-            --neon-blue: #0a84ff;
+            --x: -20vw; /* Tọa độ X mặc định */
+            --y: -10vh; /* Tọa độ Y mặc định */
+            --s: 2.2;   /* Độ zoom mặc định */
         }
-        
-        body { 
-            margin: 0; padding: 0; background-color: #000; 
-            font-family: 'Share Tech Mono', monospace; user-select: none;
-            touch-action: manipulation;
+        body {
+            margin: 0; background: #000; overflow: hidden;
             display: flex; align-items: center; justify-content: center;
-            height: 100vh; width: 100vw; overflow: hidden;
+            height: 100vh; width: 100vw; font-family: 'Orbitron', sans-serif; user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        #videoMask {
+        /* KHUNG CẮT RADAR (CÓ VIỀN ĐỎ ĐỂ DỄ CANH) */
+        #mask {
             position: relative;
-            width: 100vmin; 
-            height: 100vmin; 
-            overflow: hidden; 
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            border-radius: 4px;
+            width: 100vmin; height: 100vmin;
+            border: 2px solid #ff3b30;
+            box-sizing: border-box;
+            overflow: hidden;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
 
-        iframe { 
-            width: 100%; height: 100%; border: none; pointer-events: none; 
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        /* VÙNG CHỨA VIDEO GAME (CHUẨN 16:9) */
+        #video-container {
+            position: absolute;
+            height: 100vh; width: 177.77vh;
+            left: 50%; top: 50%;
+            /* Lệnh thả trôi video theo điều khiển của người dùng */
+            transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(var(--s));
+            transition: transform 0.1s linear;
+            pointer-events: none;
         }
 
-        /* ====== CHẾ ĐỘ 1: MINIMAP (MẶC ĐỊNH) ====== */
-        body.mode-minimap iframe {
-            object-fit: cover;
-            object-position: bottom right; 
-            /* Tỷ lệ phóng to đã được khóa chuẩn cho HUD PUBG 2K */
-            transform: scale(4.2); 
-            transform-origin: bottom right; 
+        iframe { width: 100%; height: 100%; border: none; object-fit: fill; }
+
+        /* CHẾ ĐỘ BODY CAM (FULL TOÀN CẢNH) */
+        body.mode-bodycam #mask {
+            width: 100vw; height: 100vh; border: none; border-radius: 0;
+        }
+        body.mode-bodycam #video-container {
+            transform: translate(-50%, -50%) translate(0, 0) scale(1);
+            width: 100vw; height: 100vh;
         }
 
-        /* ====== CHẾ ĐỘ 2: BODY CAM ====== */
-        body.mode-bodycam #videoMask {
-            width: 100vw;
-            height: 100vh;
-            border-radius: 0;
-        }
-
-        body.mode-bodycam iframe {
-            object-fit: contain;
-            object-position: center;
-            transform: scale(1); 
-        }
-
-        /* ====== MENU LỰA CHỌN ====== */
-        #uiOverlay {
+        /* BẢNG MENU VÀ JOYSTICK */
+        #ui {
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex; flex-direction: column; gap: 25px;
-            align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 999;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; gap: 50px;
+            z-index: 1000;
         }
+        #ui.active { display: flex; }
 
-        #uiOverlay.active { opacity: 1; pointer-events: auto; }
+        .panel { display: flex; flex-direction: column; gap: 15px; }
+        .title { color: #ff3b30; font-size: 20px; text-align: center; margin-bottom: 5px; letter-spacing: 1px; }
 
-        .title { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.8rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;}
+        .btn { background: #111; color: white; border: 2px solid #333; padding: 18px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
+        .btn:active { background: #333; transform: scale(0.95); }
+        .btn-active { border-color: #0a84ff; color: #0a84ff; }
 
-        .btn {
-            width: 280px; padding: 22px; font-size: 1.3rem; font-family: 'Orbitron', sans-serif; font-weight: 900;
-            background: #0a0a0a; color: #fff; border: 2px solid #333; border-radius: 12px;
-            text-transform: uppercase; cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
-        }
-        .btn-red { border-color: var(--neon-red); color: var(--neon-red); box-shadow: 0 0 15px rgba(255, 59, 48, 0.2); }
-        .btn-blue { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 15px rgba(10, 132, 255, 0.2); }
-        .btn:active { background: #222; transform: scale(0.95); }
+        .joystick { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; justify-content: center; }
+        .j-btn { height: 70px; background: #1a1a1a; color: white; font-size: 24px; font-weight: bold; border: 2px solid #444; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        .j-btn:active { background: #555; }
+        .j-red { border-color: #ff3b30; color: #ff3b30; }
+        
+        .hint { position: absolute; bottom: 30px; color: #888; font-size: 14px; width: 100%; text-align: center; }
     </style>
 </head>
-
 <body class="mode-minimap">
-
-    <div id="videoMask">
-        <!-- Đã ép luồng trực tiếp không độ trễ buffer=0 -->
-        <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1&buffer=0" allow="autoplay; fullscreen"></iframe>
+    <div id="mask">
+        <div id="video-container">
+            <iframe src="https://vdo.ninja/?view=c4Hg53K&label=ThaiSonOO4&autostart=1&clean=1&buffer=0" allow="autoplay; fullscreen"></iframe>
+        </div>
     </div>
 
-    <div id="uiOverlay">
-        <div class="title">TACTICAL SYSTEM</div>
-        <button class="btn btn-red" id="btnMinimap">MINIMAP (RADAR)</button>
-        <button class="btn btn-blue" id="btnBodycam">BODY CAM (FULL)</button>
+    <!-- KHUNG ĐIỀU KHIỂN CĂN CHỈNH TỌA ĐỘ -->
+    <div id="ui">
+        <div class="panel">
+            <div class="title">CHẾ ĐỘ XEM</div>
+            <button class="btn btn-active" id="btn-mini" onclick="setMode('minimap')">MINIMAP (RADAR)</button>
+            <button class="btn" id="btn-body" onclick="setMode('bodycam')">BODY CAM (FULL)</button>
+            <button class="btn" style="border-color: #ff3b30; color: #ff3b30; margin-top: 20px;" onclick="closeUI()">LƯU & ĐÓNG MENU</button>
+        </div>
+        
+        <div class="panel">
+            <div class="title">CĂN CHỈNH BẢN ĐỒ (PHÍM N)</div>
+            <div class="joystick">
+                <button class="j-btn j-red" onclick="adj('s', 0.2)">+</button>
+                <button class="j-btn" onclick="adj('y', 4)">↑</button>
+                <button class="j-btn j-red" onclick="adj('s', -0.2)">-</button>
+                <button class="j-btn" onclick="adj('x', 4)">←</button>
+                <button class="j-btn" onclick="adj('y', -4)">↓</button>
+                <button class="j-btn" onclick="adj('x', -4)">→</button>
+            </div>
+        </div>
+        <div class="hint">Mũi tên chỉ hướng nào, camera trượt theo hướng đó</div>
     </div>
 
     <script>
+        let root = document.documentElement;
+        let x = 0, y = 0, s = 2.2; // Tọa độ ban đầu
+
+        // Tải vị trí đã lưu trong bộ nhớ điện thoại
+        if(localStorage.getItem('r_saved')) {
+            x = parseFloat(localStorage.getItem('r_x'));
+            y = parseFloat(localStorage.getItem('r_y'));
+            s = parseFloat(localStorage.getItem('r_s'));
+            updateCSS();
+        }
+
+        // Cập nhật vị trí tức thời
+        function updateCSS() {
+            root.style.setProperty('--x', x + 'vw');
+            root.style.setProperty('--y', y + 'vh');
+            root.style.setProperty('--s', s);
+            localStorage.setItem('r_saved', 'yes');
+            localStorage.setItem('r_x', x);
+            localStorage.setItem('r_y', y);
+            localStorage.setItem('r_s', s);
+        }
+
+        // Nhận diện nút điều hướng
+        function adj(prop, val) {
+            if(prop === 'x') x += val;
+            if(prop === 'y') y += val;
+            if(prop === 's') { s += val; if(s < 1) s = 1; }
+            updateCSS();
+        }
+
+        function setMode(m) {
+            document.body.className = 'mode-' + m;
+            document.getElementById('btn-mini').classList.remove('btn-active');
+            document.getElementById('btn-body').classList.remove('btn-active');
+            if(m === 'minimap') document.getElementById('btn-mini').classList.add('btn-active');
+            if(m === 'bodycam') document.getElementById('btn-body').classList.add('btn-active');
+        }
+
+        function closeUI() {
+            document.getElementById('ui').classList.remove('active');
+        }
+
+        // Chạm đúp 2 lần để bật Menu
         let lastClick = 0;
-        document.body.addEventListener('click', function(e) {
-            if(e.target.tagName === 'BUTTON') return; 
-
-            let currentTime = new Date().getTime();
-            let timeDiff = currentTime - lastClick;
-            
-            // Chạm đúp (Double Tap)
-            if (timeDiff > 0 && timeDiff < 400) {
-                document.getElementById('uiOverlay').classList.add('active');
+        document.getElementById('mask').addEventListener('click', function(e) {
+            let curr = new Date().getTime();
+            if (curr - lastClick < 400) {
+                document.getElementById('ui').classList.add('active');
             }
-            lastClick = currentTime;
-        });
-
-        document.getElementById('btnMinimap').addEventListener('click', function() {
-            document.body.className = 'mode-minimap';
-            document.getElementById('uiOverlay').classList.remove('active');
-        });
-
-        document.getElementById('btnBodycam').addEventListener('click', function() {
-            document.body.className = 'mode-bodycam';
-            document.getElementById('uiOverlay').classList.remove('active');
+            lastClick = curr;
         });
     </script>
 </body>
